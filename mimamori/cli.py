@@ -7,7 +7,7 @@ import schedule
 # モジュールのインポート
 from constants import DEFAULT_PORT_NAME, DEFAULT_BAUDRATE, DEFAULT_UNIT_ID, DB_NAME
 from adapter import ModbusAdapter
-from model import SensorModel
+from model import SensorModelSQLA
 
 # --- サービスの初期化 ---
 sensor_model = SensorModel(db_name=DB_NAME)
@@ -19,6 +19,7 @@ def get_and_save_data():
     scheduleライブラリによって定期実行される。
     """
     # データベースのセットアップを最初に行う
+    sensor_model = SensorModelSQLA()
     sensor_model.setup_database()
     print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] --- データ取得処理開始 ---")
     
