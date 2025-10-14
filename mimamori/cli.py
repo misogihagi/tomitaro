@@ -5,17 +5,9 @@ from datetime import datetime
 import schedule
 
 # モジュールのインポート
+from constants import DEFAULT_PORT_NAME, DEFAULT_BAUDRATE, DEFAULT_UNIT_ID, DB_NAME
 from adapter import ModbusAdapter
 from model import SensorModel
-
-# --- アプリケーション設定 ---
-# Modbus通信設定
-PORT_NAME = "/dev/ttyACM0"
-BAUDRATE  = 9600
-UNIT_ID   = 1
-
-# データベース設定はmodel.py内にあるが、ここではインスタンス化に利用
-DB_NAME = "sensor_data.db" # model.pyのデフォルトと同じ
 
 # --- サービスの初期化 ---
 sensor_model = SensorModel(db_name=DB_NAME)
@@ -32,9 +24,9 @@ def get_and_save_data():
     
     # 1. Modbusアダプタの接続 (コンテキストマネージャを使用)
     modbus_adapter = ModbusAdapter(
-        port=PORT_NAME,
-        baudrate=BAUDRATE,
-        unit_id=UNIT_ID
+        port=DEFAULT_PORT_NAME,
+        baudrate=DEFAULT_BAUDRATE,
+        unit_id=DEFAULT_UNIT_ID
     )
 
     with modbus_adapter as adapter:
@@ -63,7 +55,7 @@ def get_and_save_data():
         # adapter.__exit__によって接続は自動的に閉じられる
 
 # --- メイン実行部 ---
-if __name__ == "__main__":
+def main():
     # スケジュール設定
     # 15分ごとに get_and_save_data 関数を実行するように設定
     schedule.every(15).minutes.do(get_and_save_data)

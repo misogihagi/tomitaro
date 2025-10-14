@@ -4,9 +4,6 @@ import sqlite3
 from datetime import datetime
 from typing import Dict, Any, List, Tuple
 
-# --- 設定 ---
-DB_NAME = "sensor_data.db"
-
 # センサーデータのアドレスと処理の定義 (ビジネスロジックの一部)
 SENSOR_MAP = {
     0: {'名前': 'temperature', 'サンプリング': 10},
