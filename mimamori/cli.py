@@ -58,12 +58,12 @@ def get_and_save_data():
 # --- メイン実行部 ---
 def main():
     # スケジュール設定
-    # 15分ごとに get_and_save_data 関数を実行するように設定
-    schedule.every(15).minutes.do(get_and_save_data)
+    # 5分ごとに get_and_save_data 関数を実行するように設定
+    schedule.every(5).minutes.do(get_and_save_data)
     
     print("\n==============================================")
     print("データ取得スケジューラーが起動しました。")
-    print("15分ごとにデータ取得とSQLite保存を実行します。")
+    print("5分ごとにデータ取得とSQLite保存を実行します。")
     print("停止するには Ctrl+C を押してください。")
     print("==============================================")
     
