@@ -10,3 +10,8 @@ dependencies = [
     "pyserial>=3.5",
     "schedule>=1.2.2",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.2",
+]
