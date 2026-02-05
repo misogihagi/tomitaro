@@ -3,6 +3,11 @@
 import time
 from datetime import datetime
 import schedule
+import requests
+import json
+import os
+import traceback
+from dotenv import load_dotenv
 
 # モジュールのインポート
 from constants import DEFAULT_PORT_NAME, DEFAULT_BAUDRATE, DEFAULT_UNIT_ID, DB_NAME
@@ -13,6 +18,7 @@ from model import SensorModelSQLA
 sensor_model = SensorModel(db_name=DB_NAME)
 # ModbusAdapterは実行時にコンテキストマネージャで接続/切断を管理
 
+
 def get_and_save_data():
     """
     データ取得、処理、保存の全体フローを実行する関数。
@@ -21,24 +27,24 @@ def get_and_save_data():
     # データベースのセットアップを最初に行う
     sensor_model = SensorModelSQLA()
     sensor_model.setup_database()
-    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] --- データ取得処理開始 ---")
-    
+    print(
+        f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] --- データ取得処理開始 ---"
+    )
+
     # 1. Modbusアダプタの接続 (コンテキストマネージャを使用)
     modbus_adapter = ModbusAdapter(
-        port=DEFAULT_PORT_NAME,
-        baudrate=DEFAULT_BAUDRATE,
-        unit_id=DEFAULT_UNIT_ID
+        port=DEFAULT_PORT_NAME, baudrate=DEFAULT_BAUDRATE, unit_id=DEFAULT_UNIT_ID
     )
 
     with modbus_adapter as adapter:
-        if adapter.client: # 接続に成功した場合のみ続行
+        if adapter.client:  # 接続に成功した場合のみ続行
+          try:
             # 2. 読み取り範囲の取得
             start_address, register_count = sensor_model.get_modbus_read_range()
 
             # 3. Modbusデータの読み取り
             raw_registers = adapter.read_holding_registers(
-                address=start_address,
-                count=register_count
+                address=start_address, count=register_count
             )
 
             if raw_registers:
@@ -54,20 +60,41 @@ def get_and_save_data():
             else:
                 print("データ取得に失敗したため、処理を中断します。")
         # adapter.__exit__によって接続は自動的に閉じられる
+          except Exception as e:
+           load_dotenv(dotenv_path)
+           webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
+           error_traceback = traceback.format_exc()
+           
+           # 一応標準出力にも
+           print(error_traceback)
+
+           # 通知送信
+           payload = {"text": error_traceback}
+           response = requests.post(
+             webhook_url, 
+             data=json.dumps(payload),
+             headers={'Content-Type': 'application/json'}
+           )
+
+           if response.status_code != 200:
+             print(f"Error: {response.status_code}, {response.text}")
+           else:
+             print("Notification sent successfully!")
+
 
 # --- メイン実行部 ---
 def main():
     # スケジュール設定
     # 5分ごとに get_and_save_data 関数を実行するように設定
     schedule.every(5).minutes.do(get_and_save_data)
-    
+
     print("\n==============================================")
     print("データ取得スケジューラーが起動しました。")
     print("5分ごとにデータ取得とSQLite保存を実行します。")
     print("停止するには Ctrl+C を押してください。")
     print("==============================================")
-    
+
     # プログラムが終了しないように無限ループでスケジュールをチェック
     while True:
         schedule.run_pending()
-        time.sleep(1) # スケジュールのチェック間隔 (1秒ごと)
+        time.sleep(1)  # スケジュールのチェック間隔 (1秒ごと)
