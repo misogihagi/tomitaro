@@ -10,6 +10,8 @@ dependencies = [
     "pyserial>=3.5",
     "requests>=2.32.5",
     "schedule>=1.2.2",
+    "sqlalchemy>=2.0.48",
+    "sqlalchemy-cloudflare-d1>=0.3.8",
 ]
 
 [dependency-groups]
