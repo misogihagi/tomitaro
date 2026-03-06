@@ -15,7 +15,8 @@ from adapter import ModbusAdapter
 from model import SensorModelSQLA
 
 # --- サービスの初期化 ---
-sensor_model = SensorModel(db_name=DB_NAME)
+# データベースの初期化は get_and_save_data 内で行うため、ここではインスタンス化のみ
+sensor_model = SensorModelSQLA(db_name=DB_NAME)
 # ModbusAdapterは実行時にコンテキストマネージャで接続/切断を管理
 
 

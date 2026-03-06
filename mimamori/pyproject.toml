@@ -8,7 +8,15 @@ dependencies = [
     "dotenv>=0.9.9",
     "pymodbus>=3.11.3",
     "pyserial>=3.5",
+    "requests>=2.32.5",
     "schedule>=1.2.2",
+    "sqlalchemy>=2.0.48",
+    "sqlalchemy-cloudflare-d1>=0.3.8",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.2",
 ]
 
 [dependency-groups]
