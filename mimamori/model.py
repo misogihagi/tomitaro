@@ -2,7 +2,8 @@ from datetime import datetime
 from typing import Dict, Any, List, Tuple
 from dotenv import load_dotenv
 
-from sqlalchemy import create_engine, Column, Float, String, Integer
+from constants import DB_NAME
+from sqlalchemy import create_engine, Column, Float, String, Integer, insert
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import MetaData, Table
@@ -20,43 +21,35 @@ SENSOR_MAP = {
     6: {"名前": "Potassium", "サンプリング": 1},
 }
 
-# ORMのためのベースクラス
 Base = declarative_base()
 
-
-# センサーマップに基づいて動的にモデルクラスを生成
-def create_measurement_model(sensor_map: Dict[int, Dict[str, Any]]):
-    """SENSOR_MAPに基づいてMeasurementモデルクラスを動的に生成する"""
-
-    # 共通のカラム
-    attrs = {
-        "__tablename__": "measurements",
-        "timestamp": Column(String, primary_key=True),
-        # 'id': Column(Integer, primary_key=True, autoincrement=True), # Auto-incrementing IDが必要な場合はこちら
-    }
-
-    # SENSOR_MAPからカラムを動的に追加
-    for config in sensor_map.values():
-        column_name = config["名前"]
-        # SQLiteのREALに対応するFloat型を使用
-        attrs[column_name] = Column(Float)
-
-    # クラス定義 (ORMマッピング)
-    Measurement = type("Measurement", (Base,), attrs)
-    return Measurement
-
-
-Measurement = create_measurement_model(SENSOR_MAP)
-
+class Measurement(Base):
+    """
+    SENSOR_MAPに基づいて静的に定義された計測データモデル
+    """
+    __tablename__ = 'measurements'
+    
+    # 主キー: タイムスタンプ
+    # 実際のアプリケーションではDateTime型が推奨されますが、元のコードに合わせてString型を使用
+    timestamp = Column(String, primary_key=True) 
+    
+    # センサーデータに対応するカラム (Float型)
+    temperature = Column(Float)
+    humidness = Column(Float)
+    EC_conductivity = Column(Float)
+    PH = Column(Float)
+    Nitrogen = Column(Float)
+    Phosphorus = Column(Float)
+    Potassium = Column(Float)
 
 def save_to_d1(measurement_data: Dict[str, Any]):
     """
     処理済みのセンサーデータをCloudflare D1データベースに保存する (SQLAlchemy Coreを使用)。
     """
-    if not data:
+    if not measurement_data:
         return
 
-    insert_stmt = Measurement.insert().values(**measurement_data)
+    insert_stmt = insert(Measurement).values(**measurement_data)
 
     try:
         account_id = os.environ["CLOUDFLARE_ACCOUNT_ID"]
@@ -67,7 +60,7 @@ def save_to_d1(measurement_data: Dict[str, Any]):
         )
         with engine.connect() as conn:
             conn.execute(insert_stmt)
-        print(f"--- D1に保存成功 ({current_time}) ---")
+        print(f"--- D1に保存成功 ---")
     except Exception as e:
         print(f"--- D1保存失敗: {e} ---")
 
@@ -91,6 +84,9 @@ class SensorModelSQLA:
         """データベースとテーブルを初期設定する (SQLAlchemy ORMを使用)"""
         # Baseのサブクラス (Measurement) に関連付けられたテーブルを作成
         Base.metadata.create_all(self.engine)
+        Base.metadata.create_all(create_engine(
+            f"cloudflare_d1://{account_id}:{api_token}@{database_id}"
+        ))
         print(f"データベース {self.db_name} のセットアップが完了しました。")
 
     def process_raw_data(self, raw_registers: List[int]) -> Dict[str, float]:
