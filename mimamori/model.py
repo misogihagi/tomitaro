@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from typing import Dict, Any, List, Tuple
 from dotenv import load_dotenv
@@ -82,6 +83,11 @@ class SensorModelSQLA:
 
     def setup_database(self):
         """データベースとテーブルを初期設定する (SQLAlchemy ORMを使用)"""
+
+        account_id=os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+        api_token=os.environ.get("CLOUDFLARE_API_TOKEN")
+        database_id=os.environ.get("CLOUDFLARE_DATABASE_ID")
+        
         # Baseのサブクラス (Measurement) に関連付けられたテーブルを作成
         Base.metadata.create_all(self.engine)
         Base.metadata.create_all(create_engine(
