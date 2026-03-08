@@ -42,6 +42,7 @@ class Measurement(Base):
     Nitrogen = Column(Float)
     Phosphorus = Column(Float)
     Potassium = Column(Float)
+    site = Column(String)
 
 def save_to_d1(measurement_data: Dict[str, Any]):
     """
@@ -72,7 +73,7 @@ class SensorModelSQLA:
     """
 
     def __init__(
-        self, db_name: str = DB_NAME, sensor_map: Dict[int, Dict[str, Any]] = SENSOR_MAP
+        self, site: str= "", db_name: str = DB_NAME, sensor_map: Dict[int, Dict[str, Any]] = SENSOR_MAP
     ):
         self.db_name = db_name
         self.sensor_map = sensor_map
@@ -130,7 +131,7 @@ class SensorModelSQLA:
 
             # Measurementオブジェクトを動的に作成
             measurement_data = {"timestamp": current_time, **data}
-            measurement = Measurement(**measurement_data)
+            measurement = Measurement({**measurement_data, "site": self.site})
 
             # セッションに追加してコミット
             session.add(measurement)
