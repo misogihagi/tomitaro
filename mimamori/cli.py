@@ -10,31 +10,26 @@ import traceback
 from dotenv import load_dotenv
 
 # モジュールのインポート
-from constants import DEFAULT_PORT_NAME, DEFAULT_BAUDRATE, DEFAULT_UNIT_ID, DB_NAME
+from constants import DEFAULT_PORT_NAME, DEFAULT_BAUDRATE, DEFAULT_UNIT_ID
 from adapter import ModbusAdapter
 from model import SensorModelSQLA
 
-# --- サービスの初期化 ---
-# データベースの初期化は get_and_save_data 内で行うため、ここではインスタンス化のみ
-sensor_model = SensorModelSQLA(db_name=DB_NAME)
-# ModbusAdapterは実行時にコンテキストマネージャで接続/切断を管理
-
-
-def get_and_save_data():
+def get_and_save_data(site):
     """
     データ取得、処理、保存の全体フローを実行する関数。
     scheduleライブラリによって定期実行される。
     """
     # データベースのセットアップを最初に行う
-    sensor_model = SensorModelSQLA()
+    sensor_model = SensorModelSQLA(site=site)
     sensor_model.setup_database()
+
     print(
         f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] --- データ取得処理開始 ---"
     )
 
     # 1. Modbusアダプタの接続 (コンテキストマネージャを使用)
     modbus_adapter = ModbusAdapter(
-        port=DEFAULT_PORT_NAME, baudrate=DEFAULT_BAUDRATE, unit_id=DEFAULT_UNIT_ID
+        port=DEFAULT_PORT_NAME, baudrate=DEFAULT_BAUDRATE, unit_id=DEFAULT_UNIT_ID, site=site
     )
 
     with modbus_adapter as adapter:
@@ -85,9 +80,19 @@ def get_and_save_data():
 
 # --- メイン実行部 ---
 def main():
-    # スケジュール設定
-    # 5分ごとに get_and_save_data 関数を実行するように設定
-    schedule.every(5).minutes.do(get_and_save_data)
+    parser = argparse.ArgumentParser(description="土壌状態を監視します")
+
+    parser.add_argument(
+        '--site', 
+        type=str, 
+        help='対象となるサイトや場所の名前を指定してください'
+    )
+
+    args = parser.parse_args()
+
+    site = args.site or ""
+
+    schedule.every(5).minutes.do(lambda x: get_and_save_data(site))
 
     print("\n==============================================")
     print("データ取得スケジューラーが起動しました。")
