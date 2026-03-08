@@ -1,6 +1,5 @@
-# cli.py
-
 import time
+import argparse
 from datetime import datetime
 import schedule
 import requests
@@ -92,7 +91,7 @@ def main():
 
     site = args.site or ""
 
-    schedule.every(5).minutes.do(lambda x: get_and_save_data(site))
+    schedule.every(5).minutes.do(lambda : get_and_save_data(site))
 
     print("\n==============================================")
     print("データ取得スケジューラーが起動しました。")

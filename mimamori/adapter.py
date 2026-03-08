@@ -1,5 +1,3 @@
-# adapter.py
-
 from pymodbus.client import ModbusSerialClient
 from typing import Optional, List, Tuple
 
@@ -7,11 +5,12 @@ class ModbusAdapter:
     """
     Modbusデバイスとの通信を扱うアダプタクラス。
     """
-    def __init__(self, port: str, baudrate: int, unit_id: int = 1, timeout: int = 1):
+    def __init__(self, port: str, baudrate: int, unit_id: int = 1, timeout: int = 1, site=""):
         self.port = port
         self.baudrate = baudrate
         self.unit_id = unit_id
         self.timeout = timeout
+        self.site=""
         self.client: Optional[ModbusSerialClient] = None
 
     def __enter__(self):
