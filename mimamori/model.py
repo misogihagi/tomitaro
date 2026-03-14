@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from typing import Dict, Any, List, Tuple
 from dotenv import load_dotenv
+import traceback
 
 from constants import DB_NAME
 from sqlalchemy import create_engine, Column, Float, String, Integer, insert
@@ -75,6 +76,7 @@ class SensorModelSQLA:
     def __init__(
         self, site: str= "", db_name: str = DB_NAME, sensor_map: Dict[int, Dict[str, Any]] = SENSOR_MAP
     ):
+        self.site = site
         self.db_name = db_name
         self.sensor_map = sensor_map
         # SQLAlchemyエンジンとセッションを初期化
@@ -130,8 +132,8 @@ class SensorModelSQLA:
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             # Measurementオブジェクトを動的に作成
-            measurement_data = {"timestamp": current_time, **data}
-            measurement = Measurement({**measurement_data, "site": self.site})
+            measurement_data = {"timestamp": current_time, "site": self.site, **data, }
+            measurement = Measurement(**measurement_data)
 
             # セッションに追加してコミット
             session.add(measurement)
@@ -141,6 +143,9 @@ class SensorModelSQLA:
         except Exception as e:
             session.rollback()
             print(f"--- データベース保存失敗: {e} ---")
+            error_traceback = traceback.format_exc()
+            print(error_traceback)
+
         finally:
             session.close()
 
