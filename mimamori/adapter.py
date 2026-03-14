@@ -1,28 +1,32 @@
 from pymodbus.client import ModbusSerialClient
 from typing import Optional, List, Tuple
 
+
 class ModbusAdapter:
     """
     Modbusデバイスとの通信を扱うアダプタクラス。
     """
-    def __init__(self, port: str, baudrate: int, unit_id: int = 1, timeout: int = 1, site=""):
+
+    def __init__(
+        self, port: str, baudrate: int, unit_id: int = 1, timeout: int = 1, site=""
+    ):
         self.port = port
         self.baudrate = baudrate
         self.unit_id = unit_id
         self.timeout = timeout
-        self.site=""
+        self.site = ""
         self.client: Optional[ModbusSerialClient] = None
 
     def __enter__(self):
         """コンテキストマネージャとして使用される際の接続処理"""
         self.client = ModbusSerialClient(
-            baudrate=self.baudrate,
-            port=self.port,
-            timeout=self.timeout
+            baudrate=self.baudrate, port=self.port, timeout=self.timeout
         )
         if not self.client.connect():
-            print("Modbusデバイスへの接続に失敗しました。ポート名や配線を確認してください。")
-            self.client = None # 接続失敗時はNoneにしておく
+            print(
+                "Modbusデバイスへの接続に失敗しました。ポート名や配線を確認してください。"
+            )
+            self.client = None  # 接続失敗時はNoneにしておく
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -41,15 +45,13 @@ class ModbusAdapter:
         try:
             # Holding Registersを一度に読み取る
             result = self.client.read_holding_registers(
-                address=address,
-                count=count,
-                unit_id=self.unit_id
+                address=address, count=count, unit_id=self.unit_id
             )
 
             if result.isError():
                 print(f"Modbus通信エラーが発生しました: {result}")
                 return None
-            
+
             if result.registers:
                 return result.registers
             else:

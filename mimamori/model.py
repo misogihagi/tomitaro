@@ -25,16 +25,18 @@ SENSOR_MAP = {
 
 Base = declarative_base()
 
+
 class Measurement(Base):
     """
     SENSOR_MAPに基づいて静的に定義された計測データモデル
     """
-    __tablename__ = 'measurements'
-    
+
+    __tablename__ = "measurements"
+
     # 主キー: タイムスタンプ
     # 実際のアプリケーションではDateTime型が推奨されますが、元のコードに合わせてString型を使用
-    timestamp = Column(String, primary_key=True) 
-    
+    timestamp = Column(String, primary_key=True)
+
     # センサーデータに対応するカラム (Float型)
     temperature = Column(Float)
     humidness = Column(Float)
@@ -44,6 +46,7 @@ class Measurement(Base):
     Phosphorus = Column(Float)
     Potassium = Column(Float)
     site = Column(String)
+
 
 def save_to_d1(measurement_data: Dict[str, Any]):
     """
@@ -74,7 +77,10 @@ class SensorModelSQLA:
     """
 
     def __init__(
-        self, site: str= "", db_name: str = DB_NAME, sensor_map: Dict[int, Dict[str, Any]] = SENSOR_MAP
+        self,
+        site: str = "",
+        db_name: str = DB_NAME,
+        sensor_map: Dict[int, Dict[str, Any]] = SENSOR_MAP,
     ):
         self.site = site
         self.db_name = db_name
@@ -87,15 +93,15 @@ class SensorModelSQLA:
     def setup_database(self):
         """データベースとテーブルを初期設定する (SQLAlchemy ORMを使用)"""
 
-        account_id=os.environ.get("CLOUDFLARE_ACCOUNT_ID")
-        api_token=os.environ.get("CLOUDFLARE_API_TOKEN")
-        database_id=os.environ.get("CLOUDFLARE_DATABASE_ID")
-        
+        account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+        api_token = os.environ.get("CLOUDFLARE_API_TOKEN")
+        database_id = os.environ.get("CLOUDFLARE_DATABASE_ID")
+
         # Baseのサブクラス (Measurement) に関連付けられたテーブルを作成
         Base.metadata.create_all(self.engine)
-        Base.metadata.create_all(create_engine(
-            f"cloudflare_d1://{account_id}:{api_token}@{database_id}"
-        ))
+        Base.metadata.create_all(
+            create_engine(f"cloudflare_d1://{account_id}:{api_token}@{database_id}")
+        )
         print(f"データベース {self.db_name} のセットアップが完了しました。")
 
     def process_raw_data(self, raw_registers: List[int]) -> Dict[str, float]:
@@ -132,7 +138,11 @@ class SensorModelSQLA:
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             # Measurementオブジェクトを動的に作成
-            measurement_data = {"timestamp": current_time, "site": self.site, **data, }
+            measurement_data = {
+                "timestamp": current_time,
+                "site": self.site,
+                **data,
+            }
             measurement = Measurement(**measurement_data)
 
             # セッションに追加してコミット
