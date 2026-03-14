@@ -9,11 +9,11 @@ import traceback
 from dotenv import load_dotenv
 
 # モジュールのインポート
-from constants import DEFAULT_PORT_NAME, DEFAULT_BAUDRATE, DEFAULT_UNIT_ID
+from constants import DEFAULT_RS485_PORT_NAME, DEFAULT_USB_PORT_NAME, DEFAULT_BAUDRATE, DEFAULT_UNIT_ID
 from adapter import ModbusAdapter
 from model import SensorModelSQLA
 
-def get_and_save_data(site):
+def get_and_save_data(site, port):
     """
     データ取得、処理、保存の全体フローを実行する関数。
     scheduleライブラリによって定期実行される。
@@ -28,7 +28,7 @@ def get_and_save_data(site):
 
     # 1. Modbusアダプタの接続 (コンテキストマネージャを使用)
     modbus_adapter = ModbusAdapter(
-        port=DEFAULT_PORT_NAME, baudrate=DEFAULT_BAUDRATE, unit_id=DEFAULT_UNIT_ID, site=site
+        port=port, baudrate=DEFAULT_BAUDRATE, unit_id=DEFAULT_UNIT_ID, site=site
     )
 
     with modbus_adapter as adapter:
@@ -90,8 +90,14 @@ def main():
     args = parser.parse_args()
 
     site = args.site or ""
+    preset = args.preset or "rs485"
+    
+   if preset == "usb":
+       port=DEFAULT_USB_PORT_NAME
+   else:
+       port=DEFAULT_RS485_PORT_NAME, 
 
-    schedule.every(5).minutes.do(lambda : get_and_save_data(site))
+    schedule.every(5).minutes.do(lambda : get_and_save_data(site=site, port=port))
 
     print("\n==============================================")
     print("データ取得スケジューラーが起動しました。")
