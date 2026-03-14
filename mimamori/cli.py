@@ -87,6 +87,19 @@ def main():
         help='対象となるサイトや場所の名前を指定してください'
     )
 
+    parser.add_argument(
+        '--mode', 
+        type=str,
+        choices=["standalone", "networked"] 
+        help='自己完結か他己完結か'
+    )
+
+    parser.add_argument(
+        '--host', 
+        type=str,
+        help='送信するリクエストの宛先'
+    )
+
     args = parser.parse_args()
 
     site = args.site or ""
@@ -95,7 +108,11 @@ def main():
    if preset == "usb":
        port=DEFAULT_USB_PORT_NAME
    else:
-       port=DEFAULT_RS485_PORT_NAME, 
+       port=DEFAULT_RS485_PORT_NAME
+   
+   if mode == "networked":
+       if not arg.host:
+           raise("他己完結モードの時は宛先を指定してください")
 
     schedule.every(5).minutes.do(lambda : get_and_save_data(site=site, port=port))
 
