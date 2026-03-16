@@ -9,6 +9,7 @@
     "hono": "^4.12.8"
   },
   "devDependencies": {
+    "biome": "^0.3.3",
     "wrangler": "^4.4.0"
   }
 }
