@@ -98,19 +98,25 @@ def main():
         help="自己完結か他己完結か",
     )
 
+    parser.add_argument(
+        "--sensor",
+        type=str,
+        choices=["usb", "rs485"],
+        help="USB接続かRS485接続か",
+    )
     parser.add_argument("--host", type=str, help="送信するリクエストの宛先")
 
     args = parser.parse_args()
 
     site = args.site or ""
-    preset = args.preset or "rs485"
+    sensor = args.sensor or "rs485"
 
-    if preset == "usb":
+    if sensor == "usb":
         port = DEFAULT_USB_PORT_NAME
     else:
         port = DEFAULT_RS485_PORT_NAME
 
-    if mode == "networked":
+    if args.mode == "networked":
         if not arg.host:
             raise ("他己完結モードの時は宛先を指定してください")
 
