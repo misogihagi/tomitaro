@@ -3,7 +3,7 @@ import { createMeasurement } from "@repo/schema";
 
 
 const app = new Elysia()
-    .post("/", (console.log, { body: createMeasurement }))
+    .post("/", ({ body }) => console.log(body), { body: createMeasurement })
     .listen(3000);
 
 console.log(
