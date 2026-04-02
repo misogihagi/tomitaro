@@ -1,4 +1,6 @@
-import { sqliteTable, text, real } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, real, unique } from 'drizzle-orm/sqlite-core';
+import { createInsertSchema } from "drizzle-typebox";
+import { t } from 'elysia';
 
 export const measurements = sqliteTable('measurements', {
   timestamp: text('timestamp').primaryKey(),
@@ -16,3 +18,8 @@ export const measurements = sqliteTable('measurements', {
 
 export type Measurement = typeof measurements.$inferSelect;
 export type NewMeasurement = typeof measurements.$inferInsert;
+
+
+export const createMeasurement = createInsertSchema(measurements, {
+  timestamp: t.Date(),
+}); 
