@@ -1,13 +1,23 @@
 import { Elysia, t } from "elysia";
-import { createMeasurement } from "@repo/schema";
+import { createMeasurement, NewMeasurement } from "@repo/schema";
+import { sqliteCommands, Database } from "@repo/schema/commands";
 
 
-const app = new Elysia()
-    .post("/", (console.log, { body: createMeasurement }))
-    .listen(3000);
+export function createElysiaApplication(db: Database, commands: typeof sqliteCommands) {
+    const { insertMeasurement } = commands(db);
+    const app = new Elysia()
+        .post("/", async ({ body }) => {
+            try {
+                const measurement: NewMeasurement = {
+                    ...body,
+                    timestamp: body.timestamp.toISOString()
+                }
+                await insertMeasurement(measurement);
+            } catch (error) {
+                console.error(error);
+            }
+        }, { body: createMeasurement })
+    return app;
+}
 
-console.log(
-    `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
-);
-
-export type App = typeof app;
+export type App = ReturnType<typeof createElysiaApplication>;
