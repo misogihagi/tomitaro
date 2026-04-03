@@ -5,6 +5,7 @@
   "private": true,
   "exports": {
     ".": "./src/index.ts",
+    "./commands": "./src/commands.ts"
   },
   "scripts": {
     "dev": "bun run src/index.ts",
