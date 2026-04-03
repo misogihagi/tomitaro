@@ -11,7 +11,7 @@ const db = drizzle({ client: sqlite });
 
 migrate(db, { migrationsFolder: "./drizzle" });
 
-const app = createElysiaApplication(db, sqliteCommands).listen(3000);
+const app = createElysiaApplication(new Elysia(), db, sqliteCommands).listen(3000);
 
 console.log(
     `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
