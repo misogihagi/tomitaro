@@ -1,4 +1,6 @@
-import { createElysiaApplication } from "@repo/server";
+import { Elysia } from "elysia";
+import { CloudflareAdapter } from 'elysia/adapter/cloudflare-worker'
+import { addMeasurementRoute } from "@repo/server";
 import { sqliteCommands } from "@repo/schema/commands";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 import cloudflareRemoteCallback from "./cloudflareRemoteCallback";
@@ -29,7 +31,10 @@ const options = {
     skipCorsPreflight: false,
 }
 
-const app = createElysiaApplication(db, sqliteCommands)
+const app = addMeasurementRoute(
+    new Elysia({
+        adapter: CloudflareAdapter
+    }), db, sqliteCommands)
     .error({ BASIC_AUTH_ERROR: BasicAuthError })
     .onError({ as: 'global' }, ({ code, error }) => {
         if (code === 'BASIC_AUTH_ERROR' && error.realm === options.realm) {
@@ -50,6 +55,6 @@ const app = createElysiaApplication(db, sqliteCommands)
             throw new BasicAuthError('Invalid credentials', options.realm)
         }
     })
-    .listen(3000);
+    .compile()
 
 export default app
