@@ -8,7 +8,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "dev": "wrangler dev src/index.ts --port 3000"
+    "dev": "wrangler dev src/index.ts --port 3000",
+    "deploy": "wrangler deploy src/index.ts"
   },
   "dependencies": {
     "@repo/schema": "*",
