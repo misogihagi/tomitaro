@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 from dotenv import load_dotenv
 import traceback
 
@@ -9,6 +9,8 @@ from sqlalchemy import create_engine, Column, Float, String, Integer, insert
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import MetaData, Table
+
+from elysia_client import ElysiaClient
 
 load_dotenv()
 
@@ -48,28 +50,6 @@ class Measurement(Base):
     site = Column(String)
 
 
-def save_to_d1(measurement_data: Dict[str, Any]):
-    """
-    処理済みのセンサーデータをCloudflare D1データベースに保存する (SQLAlchemy Coreを使用)。
-    """
-    if not measurement_data:
-        return
-
-    insert_stmt = insert(Measurement).values(**measurement_data)
-
-    try:
-        account_id = os.environ["CLOUDFLARE_ACCOUNT_ID"]
-        api_token = os.environ["CLOUDFLARE_API_TOKEN"]
-        database_id = os.environ["CLOUDFLARE_DATABASE_ID"]
-        engine = create_engine(
-            f"cloudflare_d1://{account_id}:{api_token}@{database_id}"
-        )
-        with engine.connect() as conn:
-            conn.execute(insert_stmt)
-        print(f"--- D1に保存成功 ---")
-    except Exception as e:
-        print(f"--- D1保存失敗: {e} ---")
-
 
 class SensorModelSQLA:
     """
@@ -81,6 +61,7 @@ class SensorModelSQLA:
         site: str = "",
         db_name: str = DB_NAME,
         sensor_map: Dict[int, Dict[str, Any]] = SENSOR_MAP,
+        host: Optional[str] = None,
     ):
         self.site = site
         self.db_name = db_name
@@ -89,6 +70,7 @@ class SensorModelSQLA:
         # SQLiteの場合、`sqlite:///` に続けてファイルパスを指定
         self.engine = create_engine(f"sqlite:///{self.db_name}")
         self.Session = sessionmaker(bind=self.engine)
+        self.elysia_client = ElysiaClient(host=host)
 
     def setup_database(self):
         """データベースとテーブルを初期設定する (SQLAlchemy ORMを使用)"""
@@ -126,7 +108,7 @@ class SensorModelSQLA:
 
         return processed_data
 
-    def save_data(self, data: Dict[str, float]):
+    def save_data_to_d1(self, data: Dict[str, float], elysia_client=None):
         """
         処理済みのセンサーデータをデータベースに保存する (SQLAlchemy ORMを使用)。
         """
@@ -148,7 +130,6 @@ class SensorModelSQLA:
             # セッションに追加してコミット
             session.add(measurement)
             session.commit()
-            save_to_d1(measurement_data)
             print(f"--- データベースに保存成功 ({current_time}) ---")
         except Exception as e:
             session.rollback()
@@ -158,6 +139,21 @@ class SensorModelSQLA:
 
         finally:
             session.close()
+
+    def save_data_to_elysia(self, data: Dict[str, float]):
+            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            # Measurementオブジェクトを動的に作成
+            measurement_data = {
+                "timestamp": current_time,
+                "site": self.site,
+                **data,
+            }
+            measurement = Measurement(**measurement_data)
+
+            self.elysia_client.post_measurement(measurement_data)
+
+        
 
     def get_modbus_read_range(self) -> Tuple[int, int]:
         """Modbusアダプタが読み取るべき開始アドレスとレジスタ数を返す"""

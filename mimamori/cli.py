@@ -19,7 +19,7 @@ from adapter import ModbusAdapter
 from model import SensorModelSQLA
 
 
-def get_and_save_data(site, port):
+def get_and_save_data(site, port, mode="standalone", host=None):
     """
     データ取得、処理、保存の全体フローを実行する関数。
     scheduleライブラリによって定期実行される。
@@ -57,7 +57,10 @@ def get_and_save_data(site, port):
                         print(f"  {name}: {value}")
 
                     # 5. データをデータベースに保存 (model.pyのロジックを使用)
-                    sensor_model.save_data(processed_data)
+                    if mode == "networked" and host:
+                        sensor_model.save_data_to_elysia(processed_data)
+                    else:
+                        sensor_model.save_data_to_d1(processed_data)
                 else:
                     print("データ取得に失敗したため、処理を中断します。")
             # adapter.__exit__によって接続は自動的に閉じられる
@@ -117,10 +120,10 @@ def main():
         port = DEFAULT_RS485_PORT_NAME
 
     if args.mode == "networked":
-        if not arg.host:
-            raise ("他己完結モードの時は宛先を指定してください")
+        if not args.host:
+            raise ValueError("他己完結モードの時は宛先を指定してください")
 
-    schedule.every(5).minutes.do(lambda: get_and_save_data(site=site, port=port))
+    schedule.every(5).minutes.do(lambda: get_and_save_data(site=site, port=port, mode=args.mode, host=args.host))
 
     print("\n==============================================")
     print("データ取得スケジューラーが起動しました。")
