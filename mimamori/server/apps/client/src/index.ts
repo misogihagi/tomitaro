@@ -4,7 +4,7 @@ import type { App } from '@repo/server'
 const app = treaty<App>('localhost:3000')
 
 const testMeasurement = {
-    timestamp: '2026-03-28T10:00:00Z',
+    timestamp: '2000-10-10T10:00:00Z',
     site: 'Greenhouse-A',
     temperature: 24.5,
     humidness: 65.2,
