@@ -13,14 +13,15 @@ export function insertMeasurementDB(db: Database, measurement: NewMeasurement) {
 export async function getHumidnessStatsDB(db: Database, siteSpec: string, sinceDate: Date) {
     const res = await db.select({
         min: sql<number>`MIN(${measurements.humidness})`,
-        max: sql<number>`MAX(${measurements.humidness})`
+        max: sql<number>`MAX(${measurements.humidness})`,
+        count: sql<number>`COUNT(*)`
     })
         .from(measurements)
         .where(and(
             eq(measurements.site, siteSpec),
             gt(measurements.timestamp, sinceDate.toISOString())
         ));
-    return res[0];
+    return res[0]; // 1件しか返ってこないはず
 }
 
 export function sqliteCommands(db: Database) {

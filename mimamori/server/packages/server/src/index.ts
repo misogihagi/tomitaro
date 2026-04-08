@@ -16,21 +16,22 @@ async function sendNotification(message: string) {
 
 // アプローチ：
 // 水やり直後の十分な状態（MAX）とカラカラ状態（MIN）の幅を 100% とみなして、「現在、その土のキャパシティの何%か」を出します。
-function prepareCheckAlert(getHumidnessStats: (site: string, sinceDate: Date) => Promise<{ min: number | null; max: number | null }>) {
+export function prepareCheckAlert(getHumidnessStats: (site: string, sinceDate: Date) => Promise<{ min: number | null; max: number | null }>) {
     return async (measurement: NewMeasurement): Promise<boolean> => {
         const sinceDate = new Date(measurement.timestamp)
         sinceDate.setDate(sinceDate.getDate() - LEARNING_DAYS);
 
         const stats = await getHumidnessStats(measurement.site, sinceDate);
-        if (stats && stats.min !== null && stats.max !== null)
+        if (!stats || stats.min === null || stats.max === null)
+            return false
+        if (stats.count < LEARNING_DAYS)
             return false
 
-        const min = stats.min as number
-        const spread = (stats.max as number) - min;
-        if (spread >= MIN_SPREAD_REQUIRED)
+        const spread = stats.max - stats.min;
+        if (spread < MIN_SPREAD_REQUIRED)
             return false
 
-        const relativeMoisture = ((measurement.humidness - min) / spread) * 100;
+        const relativeMoisture = ((measurement.humidness - stats.min) / spread) * 100;
 
         if (relativeMoisture < RELATIVE_MOISTURE_THRESHOLD) {
             const lastAlert = alertCooldown.get(measurement.site) || 0;
