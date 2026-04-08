@@ -22,6 +22,7 @@
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
     "@types/better-sqlite3": "^7.6.13",
-    "@types/bun": "^1.3.11"
+    "@types/bun": "^1.3.11",
+    "drizzle-orm": "^0.45.2"
   }
 }
