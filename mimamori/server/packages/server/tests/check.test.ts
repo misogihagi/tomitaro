@@ -46,11 +46,16 @@ beforeAll(() => {
             Nitrogen REAL NOT NULL,
             Phosphorus REAL NOT NULL,
             Potassium REAL NOT NULL
-        )
+        );
+        CREATE TABLE IF NOT EXISTS alerts (
+            site TEXT PRIMARY KEY,
+            timestamp TEXT NOT NULL
+        );
     `);
 
     commands = sqliteCommands(db);
-    checkAlert = prepareCheckAlert(commands.getHumidnessStats);
+    const { getHumidnessStats, getAlert, setAlert, removeAlert } = commands;
+    checkAlert = prepareCheckAlert(getHumidnessStats, getAlert, setAlert, removeAlert);
 });
 
 afterAll(() => {
