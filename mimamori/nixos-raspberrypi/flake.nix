@@ -110,6 +110,9 @@
         display-vc4 = import ./modules/display-vc4.nix;
         bluetooth = import ./modules/bluetooth.nix;
       };
+
+      tomitaro-app = import ./modules/tomitaro-app.nix;
+      wifi = import ./modules/wifi.nix;
     };
 
     overlays = {
@@ -206,6 +209,10 @@
       };
 
       custom-user-config = ({ config, pkgs, lib, nixos-raspberrypi, ... }: {
+        imports = [ 
+          nixos-raspberrypi.nixosModules.tomitaro-app 
+          nixos-raspberrypi.nixosModules.wifi
+        ];
 
         users.users.nixos.openssh.authorizedKeys.keys = [
           # YOUR SSH PUB KEY HERE #
