@@ -1,5 +1,9 @@
 { config, lib, pkgs, ... }:
 
+let
+  SSID_WIFI = builtins.getEnv "SSID_WIFI";
+  PSK_WIFI = builtins.getEnv "PSK_WIFI";
+in
 {
   networking.networkmanager = {
     enable = true;
@@ -24,13 +28,11 @@
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      # 実際のパスに合わせて読み込む（先頭の - はファイルが無くてもエラーにしないためのもの）
-      EnvironmentFile = "-/etc/nixos/secrets/wireless.env";
     };
     script = ''
       # 環境変数が読み込めていない場合は何もしない
-      if [ -z "$SSID_WIFI" ] || [ -z "$PSK_WIFI" ]; then
-        echo "SSID_WIFI or PSK_WIFI is not set in /etc/nixos/secrets/wireless.env, skipping Wi-Fi setup."
+      if [ -z "${SSID_WIFI}" ] || [ -z "${PSK_WIFI}" ]; then
+        echo "SSID_WIFI or PSK_WIFI is not set via builtins.getEnv, skipping Wi-Fi setup."
         exit 0
       fi
 
@@ -41,19 +43,19 @@
       # ※NetworkManagerは行頭の空白を嫌うため、左詰めで記述します
       cat <<EOF > "$FILE"
 [connection]
-id=$SSID_WIFI
-uuid=f5541fe5-a769-4c72-b106-d87d1432792e
+id=${SSID_WIFI}
+uuid=12345678-abcd-ef01-2345-6789abcdef
 type=wifi
 interface-name=wlan0
 
 [wifi]
 mode=infrastructure
-ssid=$SSID_WIFI
+ssid=${SSID_WIFI}
 
 [wifi-security]
 auth-alg=open
 key-mgmt=wpa-psk
-psk=$PSK_WIFI
+psk=${PSK_WIFI}
 
 [ipv4]
 method=auto
